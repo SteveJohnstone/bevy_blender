@@ -55,7 +55,7 @@ impl BlenderObjectBundle {
             std::env::current_dir()
                 .unwrap()
                 .join(std::path::PathBuf::from("assets").join(blender_file)),
-        );
+        ).expect("Could not load .blend file");
 
         Self::new_from_blend(asset_server, &blend, blender_file, object_name)
     }
@@ -119,7 +119,7 @@ impl BlenderObjectBundle {
 /// Iterates over the objects in the blend file and returns Some(Instance) if object
 /// is present and None otherwise
 fn get_object_by_name<'a>(blend: &'a Blend, name: &str) -> Option<Instance<'a>> {
-    for obj in blend.get_by_code(*b"OB") {
+    for obj in blend.instances_with_code(*b"OB") {
         if obj.get("id").get_string("name") == name {
             return Some(obj);
         }
@@ -132,7 +132,7 @@ fn get_object_by_name<'a>(blend: &'a Blend, name: &str) -> Option<Instance<'a>> 
 fn get_children<'a>(blend: &'a Blend, name: &str) -> Vec<Instance<'a>> {
     let mut children: Vec<Instance<'a>> = Vec::new();
 
-    for obj in blend.get_by_code(*b"OB") {
+    for obj in blend.instances_with_code(*b"OB") {
         if obj.is_valid("parent") && obj.get("parent").get("id").get_string("name") == name {
             children.push(obj);
         }
@@ -197,7 +197,7 @@ fn spawn_blender_object_with_error(
         std::env::current_dir()
             .unwrap()
             .join(std::path::PathBuf::from("assets").join(blender_file)),
-    );
+    ).expect("Could not load .blend file");
 
     // Get object
     let obj = match get_object_by_name(&blend, format!("OB{}", root_object_name).as_str()) {
@@ -253,8 +253,9 @@ fn spawn_blender_object_with_error(
         ..Default::default()
     };
 
+
     // Spawn Bundle
-    commands.spawn_bundle(bundle).with_children(|parent| {
+    commands.spawn(bundle).with_children(|parent| {
         if !spawn_children {
             return;
         }
@@ -319,7 +320,7 @@ fn spawn_children_objects(
     };
 
     // Spawn Bundle
-    builder.spawn_bundle(bundle).with_children(|parent| {
+    builder.spawn(bundle).with_children(|parent| {
         for child in get_children(&blend, obj.get("id").get_string("name").as_str()) {
             spawn_children_objects(
                 parent,

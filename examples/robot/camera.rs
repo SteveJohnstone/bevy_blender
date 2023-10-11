@@ -23,7 +23,7 @@ impl Default for PanOrbitCamera {
 
 /// Pan the camera with middle mouse click, zoom with scroll wheel, orbit with right mouse click.
 pub fn pan_orbit_camera(
-    windows: Res<Windows>,
+    windows: Query<&Window>,
     mut ev_motion: EventReader<MouseMotion>,
     mut ev_scroll: EventReader<MouseWheel>,
     input_mouse: Res<Input<MouseButton>>,
@@ -109,8 +109,8 @@ pub fn pan_orbit_camera(
     }
 }
 
-fn get_primary_window_size(windows: &Res<Windows>) -> Vec2 {
-    let window = windows.get_primary().unwrap();
+fn get_primary_window_size(windows: &Query<&Window>) -> Vec2 {
+    let window = windows.single();
     let window = Vec2::new(window.width() as f32, window.height() as f32);
     window
 }

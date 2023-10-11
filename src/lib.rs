@@ -133,11 +133,11 @@ async fn load_blend_assets<'a, 'b>(
     //let blend_version = (bytes[9] - 48, bytes[10] - 48, bytes[11] - 48);
 
     // TODO: check for compressed blend file and decompress if necessary
-    let blend = Blend::new(bytes);
+    let blend = Blend::new(bytes).expect("Error parsing .blend file");
     let blend_version = get_blend_version(&blend);
 
     // Load mesh assets
-    for mesh in blend.get_by_code(*b"ME") {
+    for mesh in blend.instances_with_code(*b"ME") {
         // Get the name of the mesh and remove the prepending "ME"
         let label = mesh.get("id").get_string("name");
 
@@ -169,7 +169,7 @@ async fn load_blend_assets<'a, 'b>(
         }),
     );
     // Load material assets
-    for material in blend.get_by_code(*b"MA") {
+    for material in blend.instances_with_code(*b"MA") {
         // Get the name of the material
         let label = material.get("id").get_string("name");
 

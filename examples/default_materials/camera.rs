@@ -23,12 +23,14 @@ impl Default for PanOrbitCamera {
 
 /// Pan the camera with middle mouse click, zoom with scroll wheel, orbit with right mouse click.
 pub fn pan_orbit_camera(
-    windows: Res<Windows>,
+    windows: Query<&Window>,
     mut ev_motion: EventReader<MouseMotion>,
     mut ev_scroll: EventReader<MouseWheel>,
     input_mouse: Res<Input<MouseButton>>,
     mut query: Query<(&mut PanOrbitCamera, &mut Transform, &PerspectiveProjection)>,
 ) {
+    let window = windows.single();
+
     // change input mapping for orbit and panning here
     let orbit_button = MouseButton::Left;
     let pan_button = MouseButton::Middle;
@@ -66,16 +68,16 @@ pub fn pan_orbit_camera(
         let mut any = false;
         if rotation_move.length_squared() > 0.0 {
             any = true;
-            let window = get_primary_window_size(&windows);
+            let window_size = get_primary_window_size(&window);
             let delta_x = {
-                let delta = rotation_move.x / window.x * std::f32::consts::PI * 2.0;
+                let delta = rotation_move.x / window_size.x * std::f32::consts::PI * 2.0;
                 if pan_orbit.upside_down {
                     -delta
                 } else {
                     delta
                 }
             };
-            let delta_y = rotation_move.y / window.y * std::f32::consts::PI;
+            let delta_y = rotation_move.y / window_size.y * std::f32::consts::PI;
             let yaw = Quat::from_rotation_y(-delta_x);
             let pitch = Quat::from_rotation_x(-delta_y);
             transform.rotation = yaw * transform.rotation; // rotate around global y axis
@@ -83,7 +85,7 @@ pub fn pan_orbit_camera(
         } else if pan.length_squared() > 0.0 {
             any = true;
             // make panning distance independent of resolution and FOV,
-            let window = get_primary_window_size(&windows);
+            let window = get_primary_window_size(&window);
             pan *= Vec2::new(projection.fov * projection.aspect_ratio, projection.fov) / window;
             // translate by local axes
             let right = transform.rotation * Vec3::X * -pan.x;
@@ -109,8 +111,6 @@ pub fn pan_orbit_camera(
     }
 }
 
-fn get_primary_window_size(windows: &Res<Windows>) -> Vec2 {
-    let window = windows.get_primary().unwrap();
-    let window = Vec2::new(window.width() as f32, window.height() as f32);
-    window
+fn get_primary_window_size(window: &Window) -> Vec2 {
+    Vec2::new(window.width() as f32, window.height() as f32)
 }
